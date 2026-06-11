@@ -1,11 +1,17 @@
 package dev.clanker9k.togglemods;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 /** One jar in the mods folder, plus the toggle state the user is editing. */
 public final class ManagedMod {
     /** Current file on disk (may end in .jar or .jar.disabled). */
     public Path path;
+    /** Mod id(s) this jar provides (populated for loaded jars; for dependency analysis). */
+    public final Set<String> providedIds = new HashSet<>();
+    /** Mod id(s) this jar hard-depends on (DEPENDS kind), for dependency analysis. */
+    public final Set<String> requiredIds = new HashSet<>();
     /** Human-readable name pulled from fabric.mod.json when available. */
     public final String displayName;
     /** Mod id(s) contained in the jar, for display. */

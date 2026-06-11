@@ -63,14 +63,33 @@ public final class RelaunchHelper {
 
     /**
      * On Windows, renaming a currently-loaded {@code .jar} fails (the file is
-     * locked). So: do the renames whose source is NOT loaded ("enable" ops,
-     * source ends in {@code .jar.disabled}) right now - guaranteed - and defer
-     * the rest ("disable" ops on loaded jars) plus the relaunch to a helper
-     * {@code .bat} that runs after this JVM exits.
+     * locked). We first apply the renames whose source is NOT loaded ("enable"
+     * ops) in-process, then choose how to restart:
+     *
+     * <ul>
+     *   <li><b>No locked renames left</b> (enable-only / reload restart): prefer
+     *       the {@link #tryRelauncherLibrary() Relauncher} library for a clean
+     *       restart; fall back to the built-in helper if it's absent or fails.</li>
+     *   <li><b>Locked "disable" renames remain</b>: the built-in helper is
+     *       required - it waits for this process to exit (releasing the lock),
+     *       renames, then relaunches. Relauncher can't do this: it would restart
+     *       the game and re-lock the jar before the rename could land.</li>
+     * </ul>
      */
     private static boolean windowsApplyAndRelaunch(List<Path[]> renames) {
         List<Path[]> deferred = applyUnlockedNowAndCollectDeferred(renames);
-        // Schedule the locked (disable) renames + a relaunch for after we exit.
+
+        if (deferred.isEmpty()) {
+            // Nothing locked to rename -> let Relauncher do the restart if present.
+            if (tryRelauncherLibrary()) return true; // on success this never returns
+            ToggleMods.LOGGER.info("[ToggleMods] Relauncher unavailable; using built-in relaunch.");
+        } else {
+            ToggleMods.LOGGER.info("[ToggleMods] {} mod(s) to disable need the deferred helper "
+                    + "(a loaded jar can't be renamed via Relauncher); using built-in relaunch.",
+                    deferred.size());
+        }
+
+        // Built-in path: helper waits for exit, renames the deferred jars, relaunches.
         if (!spawnHiddenHelper(deferred, windowsRelaunchCommand())) {
             ToggleMods.LOGGER.error("[ToggleMods] Could not schedule Windows relaunch helper. "
                     + "Any enable changes were applied; restart the game manually.");
@@ -259,7 +278,12 @@ public final class RelaunchHelper {
 
     // --------------------------------------------------------- shared helpers
 
-    @SuppressWarnings("unused")
+    /**
+     * Try the optional Relauncher library (resolved by reflection so it's never
+     * a hard dependency). On a successful relaunch the process is replaced and
+     * this never returns; otherwise it returns {@code false} and the caller uses
+     * the built-in path.
+     */
     private static boolean tryRelauncherLibrary() {
         try {
             Class<?> cls = Class.forName("com.juanmuscaria.relauncher.Relauncher");

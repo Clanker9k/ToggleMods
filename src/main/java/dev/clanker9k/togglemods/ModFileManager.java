@@ -2,6 +2,7 @@ package dev.clanker9k.togglemods;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModDependency;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -32,7 +33,7 @@ public final class ModFileManager {
 
     /** Jars we refuse to disable because doing so would break the toggler itself. */
     private static final String[] LOCKED_NAME_HINTS = {
-            "togglemods", "togglemods", "relauncher", "fabric-api", "fabric-loader", "fabricloader"
+            "togglemods", "relauncher", "fabric-api", "fabric-loader", "fabricloader"
     };
 
     private static boolean isLockedName(String fileName) {
@@ -147,6 +148,8 @@ public final class ModFileManager {
             ToggleMods.LOGGER.error("[ToggleMods] Failed to scan mods folder", t);
         }
 
+        fillDependencyInfo(out);
+
         // Unlocked mods first (alphabetical), then locked/essential jars pinned
         // to the bottom (also alphabetical).
         out.sort(Comparator.comparing((ManagedMod m) -> m.locked)
@@ -223,5 +226,68 @@ public final class ModFileManager {
             }
         }
         PendingStore.save(map);
+    }
+
+    // ------------------------------------------------------- dependency awareness
+
+    /**
+     * Fill {@link ManagedMod#providedIds}/{@link ManagedMod#requiredIds} for the
+     * currently-loaded jars from Fabric's metadata (we can only read deps for
+     * mods Fabric actually loaded this session).
+     */
+    private static void fillDependencyInfo(List<ManagedMod> mods) {
+        Map<String, ManagedMod> byBase = new HashMap<>();
+        for (ManagedMod m : mods) {
+            byBase.put(m.baseFileName().toLowerCase(Locale.ROOT), m);
+        }
+        Path modsAbs = modsDir().toAbsolutePath().normalize();
+        for (ModContainer mc : FabricLoader.getInstance().getAllMods()) {
+            try {
+                for (Path p : mc.getOrigin().getPaths()) {
+                    Path abs = p.toAbsolutePath().normalize();
+                    if (!abs.startsWith(modsAbs)) continue;
+                    ManagedMod m = byBase.get(abs.getFileName().toString().toLowerCase(Locale.ROOT));
+                    if (m == null) continue;
+                    m.providedIds.add(mc.getMetadata().getId());
+                    for (ModDependency d : mc.getMetadata().getDependencies()) {
+                        if (d.getKind() == ModDependency.Kind.DEPENDS) {
+                            m.requiredIds.add(d.getModId());
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+                // some origins (nested/builtin) don't expose usable paths
+            }
+        }
+    }
+
+    /**
+     * The set of currently desired-enabled mods that would lose a required
+     * dependency if {@code target} were disabled, computed transitively (a mod
+     * that breaks can in turn break its own dependents). Excludes {@code target}.
+     */
+    public static Set<ManagedMod> dependentsBrokenByDisabling(ManagedMod target, List<ManagedMod> all) {
+        Set<ManagedMod> off = new LinkedHashSet<>();
+        off.add(target);
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (ManagedMod y : all) {
+                if (off.contains(y) || y.locked || !y.desiredEnabled) continue;
+                for (String req : y.requiredIds) {
+                    boolean removedByOff = off.stream().anyMatch(o -> o.providedIds.contains(req));
+                    if (!removedByOff) continue;
+                    boolean stillProvided = all.stream()
+                            .anyMatch(o -> !off.contains(o) && o.desiredEnabled && o.providedIds.contains(req));
+                    if (!stillProvided) {
+                        off.add(y);
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+        }
+        off.remove(target);
+        return off;
     }
 }

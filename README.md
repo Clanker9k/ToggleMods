@@ -24,9 +24,9 @@ This mod is fully open-source and does **no networking, obfuscation, or data
 collection**. To restart the game and to rename a jar after exit, it
 must spawn external processes, which can look unusual to automated scanners:
 
-- It writes a small temporary `.bat` (and a `.vbs` shim to run it hidden) to the OS temp dir, which waits for this game process to exit, renames the jars, then optionally relaunches. See [`RelaunchHelper.java`](src/main/java/dev/clanker9k/togglemods/RelaunchHelper.java).
-- Under Prism Launcher / MultiMC it relaunches via `prismlauncher.exe --launch <INST_ID>` (their stdin launch protocol can't be replayed any other way).
-- It uses reflection to optionally call the [Relauncher](https://modrinth.com/mod/relauncher) library if present.
+- If the [Relauncher](https://modrinth.com/mod/relauncher) library is installed, it does the restart cleanly (called by reflection, never a hard dependency). Enabling/reloading mods takes this path.
+- Disabling a *loaded* mod can't rename its jar mid-session, so it writes a small temporary `.bat` (and a `.vbs` shim to run it hidden) to the OS temp dir, which waits for this game process to exit, renames the jars, then relaunches. See [`RelaunchHelper.java`](src/main/java/dev/clanker9k/togglemods/RelaunchHelper.java).
+- Without Relauncher, that helper handles every restart too; under Prism Launcher / MultiMC it relaunches via `prismlauncher.exe --launch <INST_ID>` (their stdin launch protocol can't be replayed any other way).
 
 All of this is visible and commented in the source.
 
@@ -34,7 +34,7 @@ Don't trust binaries? Don't run binaries. Clone the repo, review the diffs, and 
 Just be consistent: if you're not auditing this, you probably aren't auditing the client/plugins you already run.
 ## AI Notice
 
-This mod was built completely by Anthropic's Opus 4.8, I started it just for myself, it works as-is and all I did was audit the code and lead the AI through the logic. If you can make a deslopified fork of this mod, that'd be neat.
+This mod was built completely by Anthropic's Opus 4.8, I built it just for myself, it works as-is and all I did was audit the code and lead the AI through the logic. If you can make a deslopified fork of this mod, that'd be neat.
 The full source is here for anyone to read, audit, and modify.
 
 ## Building
@@ -49,12 +49,6 @@ gradlew build
 ./gradlew build
 ```
 
-If your default `java` isn't 25, point Gradle at one:
-
-```bash
-./gradlew build -Dorg.gradle.java.home="/path/to/jdk-25"
-```
-
 The jar lands in `build/libs/togglemods-1.0.0.jar`.
 
 ## Installing
@@ -66,7 +60,8 @@ restart.
 ## Compatibility
 
 - **Minecraft** 26.1.x · **Fabric Loader** ≥ 0.18.4 · **Fabric API** required.
+- **Client-side only.** Mod toggling works on any launcher; the one-click restart is cleanest with **[Relauncher](https://modrinth.com/mod/relauncher)** installed (tested on Prism Launcher).
 
 ## License
 
-[MIT](LICENSE) © Clanker9K
+[MIT](https://opensource.org/license/mit) © Clanker9K
