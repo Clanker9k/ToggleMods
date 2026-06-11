@@ -62,7 +62,7 @@ restart.
 ## Compatibility
 
 - **Minecraft** 26.1.x · **Fabric Loader** ≥ 0.18.4 · **Fabric API** required.
-- **Client-side only.** Mod toggling works on any launcher; the one-click restart is cleanest with **[Relauncher](https://modrinth.com/mod/relauncher)** installed (tested on Prism Launcher).
+- **Client-side.** Mod toggling works on any launcher; the one-click restart is cleanest with **[Relauncher](https://modrinth.com/mod/relauncher)** installed (tested on Prism Launcher).
 
 ## License
 
