@@ -8,7 +8,7 @@ change with a one-click restart (or save it for the next launch).
 
 Opens from a **folder button on the title screen** or a keybind in-game (default **O**).
 
-## Tech side
+## Tech Side
 
 1. It edits the `mods/` folder, renaming `foo.jar` ⇄ `foo.jar.disabled` (the
    suffix Fabric and every launcher ignore).
