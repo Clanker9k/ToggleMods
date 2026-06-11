@@ -34,7 +34,9 @@ Don't trust binaries? Don't run binaries. Clone the repo, review the diffs, and 
 Just be consistent: if you're not auditing this, you probably aren't auditing the client/plugins you already run.
 ## AI Notice
 
-This mod was built completely by Anthropic's Opus 4.8, I built it just for myself, it works as-is and all I did was audit the code and lead the AI through the logic. If you can make a deslopified fork of this mod, that'd be neat.
+This mod was built completely by Anthropic's Opus 4.8, I built it just for myself, it works as-is and all I did was audit the code and lead the AI through the logic.
+
+If you can make a deslopified fork of this mod, that'd be neat.
 The full source is here for anyone to read, audit, and modify.
 
 ## Building
