@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        gradlePluginPortal()
+    }
+}
+
+// Loom 1.15+ requires the matching Gradle (9.4.0 at time of the 26.1 release).
+rootProject.name = 'togglemods'

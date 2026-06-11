@@ -1,0 +1,65 @@
+plugins {
+    // 26.1 uses the NEW non-remapping Loom plugin (Minecraft is unobfuscated,
+    // so there is nothing to remap and Yarn is gone).
+    id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
+    id 'java'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+loom {
+    // Keep client-only code (screens, keybinds) in src/client so it can never
+    // be loaded on a dedicated server.
+    splitEnvironmentSourceSets()
+}
+
+repositories {
+    maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
+    // Relauncher (com.juanmuscaria) is published to Maven Central.
+    mavenCentral()
+}
+
+dependencies {
+    // Because 26.1 is unobfuscated, the Minecraft jar is used directly - no
+    // mappings dependency and no modImplementation/remap dance.
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Optional but recommended: clean cross-platform JVM relaunch.
+    // Resolved at runtime from the relauncher jar the user installs.
+    compileOnly "com.juanmuscaria:relauncher-core:${project.relauncher_version}"
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version
+    }
+}
+
+java {
+    // 26.1 requires Java 25.
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 25
+    it.options.encoding = 'UTF-8'
+}
+
+// Under the new Loom, the plain `jar` task is the publishable artifact
+// (there is no remapJar step anymore).
+jar {
+    from('LICENSE') {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}

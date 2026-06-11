@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+# Bundled Gradle distribution used for local builds (use the wrapper instead)
+gradle-9.4.0-bin/
+
+# Minecraft / Loom run dir
+run/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+*.classpath
+*.project
+bin/
+out/
+eclipse/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

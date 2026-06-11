@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "togglemods",
+  "version": "${version}",
+  "name": "ToggleMods",
+  "description": "Toggle mods and instantly restart the game.",
+  "authors": [ "Clanker9K" ],
+  "contact": {
+    "homepage": "https://github.com/Clanker9K/ToggleMods",
+    "sources": "https://github.com/Clanker9K/ToggleMods",
+    "issues": "https://github.com/Clanker9K/ToggleMods/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/togglemods/textures/gui/folder.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [ "dev.clanker9k.togglemods.ToggleMods" ],
+    "client": [ "dev.clanker9k.togglemods.client.ToggleModsClient" ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~26.1",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "relauncher": "*"
+  }
+}
